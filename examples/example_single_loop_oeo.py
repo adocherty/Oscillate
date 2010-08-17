@@ -1,0 +1,169 @@
+# encoding: utf-8
+import sys
+sys.path.append('..')
+
+import numpy as np
+import scipy as sp
+import pylab as pl
+
+from numpy import pi, linalg
+from scipy import fftpack as fftp
+
+from Oscillate import *
+from Oscillate.opticalfiber import *
+from Oscillate.discrete import *
+from Oscillate.components import *
+from Oscillate.modulators import *
+from Oscillate.amplifiers import *
+from Oscillate.detectors import *
+from Oscillate.noisesources import *
+from Oscillate.analysis import *
+
+# Oscillator parameters:
+f_osc = 10e9                     # Design oscillation frequency (Hz)
+tao = 0.2e-6                      # Round-trip time (s)
+n_osc = round(f_osc*tao )        # Oscillation mode number
+f0 = n_osc/tao                   # Exact oscillation frequency (Hz)
+w0 = 2*pi*n_osc/tao              # Exact oscillation frequency (rad/s)
+
+Gs = 1.5                         # Small signal gain
+P0 = dBm_to_power(14.77)         # Input optical power
+eta = 1.0                        # Modulator η
+Vpi = 3.14                       # Modulator half-wave voltage
+Vb = 3.14                        # Modulator bias voltage
+rho = 0.8                        # Detector σ
+R = 50.                          # Detector impedance
+Vph = P0*rho*R/2                 # Detector photovoltage
+Gwidth = 8e6                     # The bandwidth of the filter
+looploss = 0.33                  # Lumped loss for all components
+Psat = 0.07                      # Amplifier saturation power
+
+# Simulation parameters
+Nf = 2                           # Number of harmonics
+Nms = 256                        # Multi-scale discretization
+Tms = tao                        # Multiscale Time window - must be round trip for full simulation
+Nrt = 6000                       # Analysis round trips
+Ninit = 2000                     # Initial settling round trips
+
+# Signal definitions
+m0s = MultiscaleSignal(1, Tms, Nf, w0, real=True)
+mss = MultiscaleSignal(Nms, Tms, Nf, w0, real=True)
+
+# Modulator & Detector
+modet = ModulatorDetector(eta, Vb, Vpi, Vph, iloss=looploss**2)
+
+# Filter
+wf = w0
+filt = LorenzianFilter(wf, Gwidth)
+
+# Additive noise
+noise = NoiseSource(b0=2*R*1e-20)
+
+# Amplifier
+Ga_initial = 7.5
+amp = Amplifier(Ga_initial)
+#amp = SimpleSaturableAmplifier(Ga_initial, Psat)
+
+# Create oscillator loop, noise is added to signal before the amplifier
+loop = Loop([modet, noise, amp, filt])
+
+# Check small signal gain & calculate amplifier gain to give specified Gs
+Gs_calc = loop.calc_ss_gain(m0s)
+Ga = Ga_initial*Gs/Gs_calc
+amp.set_gain(Ga)
+print "Calculated amplifier gain:", Ga
+
+# 
+# The OEO delay line oscillator for signal only, we take a single point in the signal
+# at each harmonic, so ignore any noise
+#
+def signal_spectrum(pss, loop):
+    # The initial signal
+    v_sig = np.ones(pss.shape, np.complex_)
+    v_in = v_sig.copy()
+
+    # The loop
+    ii=0
+    difference=np.inf
+    while (ii<100) and (difference>1e-10):
+        pss,v_sig = loop.singlepass(pss,v_in, sources=False)
+        
+        #Check the convergence of the signal
+        difference = linalg.norm(v_in-v_sig)
+        v_in = v_sig
+        
+        ii+=1
+
+    Ps = pss.power(v_sig)
+    print "Converged to %.4g in %d iterations to signal power P=%.3g" % (difference,ii,Ps)
+    print "Loop coefficients", np.abs(np.mean(v_sig[:4], axis=1))
+
+    return v_sig
+
+# 
+# The OEO delay line oscillator signal and noise operating spectrum
+#
+def noise_spectrum(mss, loop):
+    # The initial signal
+    v_sig = np.zeros(mss.shape, np.complex_)
+    v_sig[:] = v0_sig
+    
+    loopsig = LoopStorage(mss, Nrt, mss.Nt)
+
+    print "Calculating ..."
+
+    ii=0
+    while (ii<Nrt+Ninit):
+        mss,v_sig = loop.singlepass(mss,v_sig)
+        
+        # Collect round trips
+        if ii>=Ninit: loopsig.store(mss, v_sig[1])
+
+        ii += 1
+
+    Ps = mss.power(v_sig)
+    print "Calculated noise over %d iterations, signal power P=%.3g" % (ii,Ps)
+    print "Loop coefficients", np.abs(np.mean(v_sig[:4], axis=1))
+    
+    return loopsig
+    
+# 
+# Plot the OEO spectrum
+#
+def plot_spectrum(loopsig):
+    global asig
+    fig1, (ax1,ax2) = pl.subplots(2, 1, num=1)
+
+    #Extract entire signal
+    dss,vs = loopsig.time_concatenated_signal()
+    ax2.plot(dss.t, np.abs(vs))
+    
+    #Analaysis
+    asig = Analysis()
+    asig.set_signal(dss,vs)
+
+    print "Noise deviation:", asig.deviation()
+
+    f,pn = asig.phase_noise_spectrum(fstart=1e2, fend=1e7)
+    f,an = asig.amplitude_noise_spectrum(fstart=1e2, fend=1e7)
+
+    ax1.plot(f, power_to_dB(np.abs(an)**2*dss.T), 'r:', linewidth=0.5)
+    ax1.plot(f, power_to_dB(np.abs(pn)**2*dss.T), 'k:', linewidth=1)
+
+    ax1.grid(True)
+    ax1.semilogx()
+    ax1.set_ylim(-220,-100)
+    ax1.set_xlabel(r'Frequency (Hz)')
+    ax1.set_ylabel(r'Noise PSD (dB)')
+
+    ax2.set_xlabel(r'Time (s)')
+    ax2.set_ylabel(r'Output signal level (V)')
+
+    fig1.savefig('figure1_single_loop.pdf', format='pdf')
+
+v0_sig = signal_spectrum(m0s, loop)
+loopsig = noise_spectrum(mss, loop)
+plot_spectrum(loopsig)
+
+pl.draw()
+
