@@ -1,6 +1,4 @@
 # encoding: utf-8
-
-
 """
 Noise sources for optical and electronic components
 
@@ -31,21 +29,17 @@ def discrete_white_noise(N,dt,Q):
     w = sp.random.normal(0, np.sqrt(Qd), N)
     return w
 
-class NoiseSource(SourceComponent):
-    def __init__(self, b0=0, b1=0, b2=0):
-        self.nd0 = np.sqrt(b0/2)
-        self.nd1 = np.sqrt(b1/2)
-        self.nd2 = np.sqrt(b2/2)
-        
+class WhiteNoiseSource(SourceComponent):
+    def __init__(self, nd=0):
+        self.nd = np.sqrt(nd/2)
         self.set_source_channels()
         
     def set_source_channels(self, channels=None):
         self.source_channels = channels
 
-    @timer.time_function(prefix="noisesource:")
     def _generate_noise_(self, N, dt):
-        # Shared noise function: Generate noise
-        # with a vector shape N, 
+        # Shared noise function:
+        # Generate noise with a vector shape N
         xt = np.zeros(N, dtype=np.complex_)
         
         if self.source_channels is None:
@@ -54,20 +48,9 @@ class NoiseSource(SourceComponent):
             scs = np.atleast_1d(self.source_channels)
 
         for ii in scs:
-            if self.nd0>0:
-                n1 = discrete_white_noise(N[1], dt, 1.0)
-                n2 = discrete_white_noise(N[1], dt, 1.0)
-                xt[ii] += self.nd0*(n1 + 1j*n2)
-            if self.nd1>0:
-                n1 = ng.discrete_falpha_process(N[1], dt, 1.0, 1.0)
-                n2 = ng.discrete_falpha_process(N[1], dt, 1.0, 1.0)
-                xt[ii] += self.nd1*(n1 + 1j*n2)
-            if self.nd2>0:
-                print "Generating 1/f^2 noise"
-                n1 = ng.discrete_brownian_process(N[1], dt, 1.0)
-                n2 = ng.discrete_brownian_process(N[1], dt, 1.0)
-                xt[ii] += self.nd2*(n1 + 1j*n2)
-
+            n1 = discrete_white_noise(N[1], dt, 1.0)
+            n2 = discrete_white_noise(N[1], dt, 1.0)
+            xt[ii] += self.nd*(n1 + 1j*n2)
         return xt
 
     def direct(self, ds):
@@ -93,6 +76,11 @@ class NoiseSource(SourceComponent):
         Noise source for a multiscale signal
         """
         return self._generate_noise_(ms.shape,ms.dt)
+
+
+
+class FlickerNoiseSource(SourceComponent):
+    pass
 
 
 class DeltaSource(SourceComponent):

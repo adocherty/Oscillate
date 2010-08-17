@@ -17,13 +17,16 @@ import pylab as pl
 from numpy import pi, linalg
 from scipy import fftpack as fftp
 
-from Oscillate import *
-from Oscillate.opticalfiber import *
-from Oscillate.discrete import *
-from Oscillate.components import *
-from Oscillate.modulators import *
-from Oscillate.detectors import *
-from Oscillate.amplifiers import *
+from oscillate import *
+from oscillate.opticalfiber import *
+from oscillate.discrete import *
+from oscillate.components import *
+from oscillate.modulators import *
+from oscillate.amplifiers import *
+from oscillate.detectors import *
+from oscillate.noisesources import *
+from oscillate.analysis import *
+
 
 Nf = 2
 Nms = 256

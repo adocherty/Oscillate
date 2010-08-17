@@ -9,15 +9,15 @@ import pylab as pl
 from numpy import pi, linalg
 from scipy import fftpack as fftp
 
-from Oscillate import *
-from Oscillate.opticalfiber import *
-from Oscillate.discrete import *
-from Oscillate.components import *
-from Oscillate.modulators import *
-from Oscillate.amplifiers import *
-from Oscillate.detectors import *
-from Oscillate.noisesources import *
-from Oscillate.analysis import *
+from oscillate import *
+from oscillate.opticalfiber import *
+from oscillate.discrete import *
+from oscillate.components import *
+from oscillate.modulators import *
+from oscillate.amplifiers import *
+from oscillate.detectors import *
+from oscillate.noisesources import *
+from oscillate.analysis import *
 
 # Oscillator parameters:
 f_osc = 10e9                     # Design oscillation frequency (Hz)
@@ -35,8 +35,8 @@ Psat = 0.07                      # Amplifier saturation power
 Nf = 2                           # Number of harmonics
 Nms = 256                        # Multi-scale discretization
 Tms = tao                        # Multiscale Time window - must be round trip for full simulation
-Nrt = 5000                       # Analysis round trips
-Ninit = 2000                     # Initial settling round trips
+Nrt = 10000                       # Analysis round trips
+Ninit = 0000                     # Initial settling round trips
 
 # Signal definitions
 m0s = MultiscaleSignal(1, Tms, Nf, w0, real=True)
@@ -46,8 +46,8 @@ mss = MultiscaleSignal(Nms, Tms, Nf, w0, real=True)
 wf = w0
 filt = LorenzianFilter(wf, Gwidth, iloss=looploss)
 
-# Additive noise
-noise = NoiseSource(b0=0e-18, b1=1e-18)
+# Noise source
+noise = WhiteNoiseSource(1e-18)
 
 # Amplifier
 Ga_initial = 7.5
@@ -133,8 +133,8 @@ def plot_spectrum(loopsig):
 
     print "Noise deviation:", asig.deviation()
 
-    f,pn = asig.phase_noise_spectrum(fstart=1e2, fend=1e7)
-    f,an = asig.amplitude_noise_spectrum(fstart=1e2, fend=1e7)
+    f,pn = asig.phase_noise_spectrum(fstart=1e1, fend=1e6)
+    f,an = asig.amplitude_noise_spectrum(fstart=1e1, fend=1e6)
 
     ax1.plot(f, power_to_dB(np.abs(an)**2*dss.T), 'r:', linewidth=0.5)
     ax1.plot(f, power_to_dB(np.abs(pn)**2*dss.T), 'k:', linewidth=1)
@@ -145,7 +145,7 @@ def plot_spectrum(loopsig):
     ax1.set_xlabel(r'Frequency (Hz)')
     ax1.set_ylabel(r'Noise PSD (dB)')
 
-    fig1.savefig('figure1_single_loop.pdf', format='pdf')
+    fig1.savefig('figure1_delayline_oscillator.pdf', format='pdf')
 
 v0_sig = signal_spectrum(m0s, loop)
 loopsig = noise_spectrum(mss, loop, v0_sig)

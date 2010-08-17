@@ -2,7 +2,6 @@
 import sys
 sys.path.append('..')
 
-
 import numpy as np
 import scipy as sp
 import pylab as pl
@@ -10,15 +9,15 @@ import pylab as pl
 from numpy import pi, linalg
 from scipy import fftpack as fftp
 
-from Oscillate import *
-from Oscillate.opticalfiber import *
-from Oscillate.discrete import *
-from Oscillate.components import *
-from Oscillate.modulators import *
-from Oscillate.amplifiers import *
-from Oscillate.detectors import *
-from Oscillate.noisesources import *
-from Oscillate.analysis import *
+from oscillate import *
+from oscillate.opticalfiber import *
+from oscillate.discrete import *
+from oscillate.components import *
+from oscillate.modulators import *
+from oscillate.amplifiers import *
+from oscillate.detectors import *
+from oscillate.noisesources import *
+from oscillate.analysis import *
 
 # Oscillator parameters:
 f_osc = 10e9                     # Design oscillation frequency (Hz)
@@ -68,7 +67,7 @@ wf = w0
 filt = LorenzianFilter2(wf, Gwidth)
 
 # Additive noise
-noise = NoiseSource(b0=2*R*1e-20)
+noise = WhiteNoiseSource(2*R*1e-20)
 
 # Amplifier
 Ga_initial = 7.5
@@ -150,7 +149,6 @@ def plot_spectrum(ax, loopsig):
     ax.semilogx()
     ax.set_ylim(-220,-60)
 
-
 loopsig1, loopsig2 = noise_spectrum(ms1, ms2, loop1, loop2)
 fig1, (ax1,ax2) = pl.subplots(2, 1, num=1)
 
@@ -160,6 +158,6 @@ plot_spectrum(ax2,loopsig2)
 ax2.set_xlabel(r'Frequency (Hz)')
 ax1.set_ylabel(r'Noise PSD (dB)')
 
-fig1.savefig('figure2_dual_loop_1.pdf', format='pdf')
+fig1.savefig('figure3_dual_loop_1.pdf', format='pdf')
 pl.draw()
 

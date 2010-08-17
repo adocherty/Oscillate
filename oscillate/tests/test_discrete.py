@@ -16,15 +16,16 @@ import scipy as sp
 from numpy import pi, linalg
 from scipy import fftpack as fftp
 
-from Optolib import *
+from oscillate import *
+from oscillate.opticalfiber import *
+from oscillate.discrete import *
+from oscillate.components import *
+from oscillate.modulators import *
+from oscillate.amplifiers import *
+from oscillate.detectors import *
+from oscillate.noisesources import *
+from oscillate.analysis import *
 
-from Optolib.opticalfiber import *
-from Optolib.discrete import *
-from Optolib.components import *
-from Optolib.modulators import *
-from Optolib.amplifiers import *
-from Optolib.detectors import *
-from Optolib.noisesources import *
 
 w0 = 2*pi
 

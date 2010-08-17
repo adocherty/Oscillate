@@ -8,7 +8,7 @@ from distutils.extension import Extension
 from Cython.Distutils import build_ext
 from Cython.Distutils.extension import Extension as CythonExtension
 
-pkg_name = "Oscillate"
+pkg_name = "oscillate"
 pkg_version = "0,1"
 
 # Numpy includes
@@ -38,7 +38,7 @@ setup(
     author='Andrew Docherty',
     author_email='docherty@umbc.edu',
     cmdclass = {'build_ext': build_ext},
-    packages = ['Oscillate'],
+    packages = ['oscillate'],
     zip_safe = True,
     ext_modules = ext_modules
 )
