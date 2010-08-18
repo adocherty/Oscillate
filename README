@@ -1,0 +1,31 @@
+Oscillate
+=========
+
+Installation
+------------
+
+To use Oscillate the following prerequisites are required:
+
+ * Python :: http://www.python.org
+ * Numpy and Scipy :: http://www.scipy.org
+ * Matplotlib :: http://matplotlib.sf.net
+ * Cython :: http://www.cython.org
+
+
+For Ubuntu linux these prerequisites can be installed with the following commands:
+
+ sudo apt-get install python python-numpy python-scipy python-matplotlib cython
+ 
+
+For Windows an easy way to install Python and all the required packages is with Python (x,y):
+
+ http://www.pythonxy.com
+ 
+ 
+This library can be used in place, setting your Python path to point to this directory.  This won't include any compiled modules.
+
+To build this software and install it in the usual way use the command:
+
+ python setup.py install
+
+
